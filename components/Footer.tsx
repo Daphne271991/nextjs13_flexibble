@@ -74,7 +74,7 @@ const Footer = () => (
 
     <div className="flexBetween footer_copyright">
       <p>
-        @ 2023 Flexibble. All rights reserved, coded x{" "}
+        @ 2023 Flexibble. All rights reserved | coded x{" "}
         <a href="https://www.linkedin.com/in/daphnebonilla/" target="_blank">
           Daphne Bonilla
         </a>
