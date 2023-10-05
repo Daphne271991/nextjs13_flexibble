@@ -97,7 +97,7 @@ export const createNewProject = async (
     if (imageUrl.url) {
       client.setHeader("Authorization", `Bearer ${token}`);
 
-      const variables = {
+      const variables: { input: any } = {
         input: {
           ...form,
           image: imageUrl.url,
