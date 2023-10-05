@@ -24,61 +24,6 @@ const serverUrl = isProduction
 
 const client = new GraphQLClient(apiUrl);
 
-// Define TypeScript types for GraphQL response and variables
-type GraphQLResponse<T> = {
-  data: T;
-};
-
-type GraphQLVariables = Record<string, any>;
-
-const makeGraphQLRequest = async <T>(
-  query: string,
-  variables: GraphQLVariables = {}
-): Promise<T> => {
-  try {
-    // Check for null specifically in the 'category' field
-    if (variables.category === null) {
-      variables.category = ""; // convert null to an empty string
-    }
-
-    const response: GraphQLResponse<T> = await client.request(query, variables);
-    return response.data;
-  } catch (err) {
-    throw err;
-  }
-};
-
-// Define the types for GraphQL mutations and queries
-type CreateProjectMutationResponse = {
-  projectCreate: {
-    project: {
-      id: string;
-      title: string;
-      description: string;
-      createdBy: {
-        email: string;
-        name: string;
-      };
-    };
-  };
-};
-
-type UpdateProjectMutationResponse = {
-  projectUpdate: {
-    project: {
-      id: string;
-      title: string;
-      description: string;
-      createdBy: {
-        email: string;
-        name: string;
-      };
-    };
-  };
-};
-
-// Add similar type definitions for other mutations and queries
-
 export const fetchToken = async (): Promise<any> => {
   try {
     const response = await fetch(`${serverUrl}/api/auth/token`);
@@ -102,6 +47,22 @@ export const uploadImage = async (imagePath: string): Promise<any> => {
   }
 };
 
+const makeGraphQLRequest = async (
+  query: string,
+  variables = {}
+): Promise<any> => {
+  try {
+    // Check for null specifically in the 'category' field
+    if (variables.category === null) {
+      variables.category = ""; // convert null to an empty string
+    }
+
+    return await client.request(query, variables);
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const fetchAllProjects = async (
   category?: string | null,
   endcursor?: string | null
@@ -111,7 +72,7 @@ export const fetchAllProjects = async (
     client.setHeader("x-api-key", apiKey);
 
     // Convert null to an empty string only for the 'category' field
-    const variables: GraphQLVariables = { category: category || "", endcursor };
+    const variables = { category: category || "", endcursor };
 
     // Make the GraphQL request
     const response = await makeGraphQLRequest(projectsQuery, variables);
@@ -129,23 +90,32 @@ export const createNewProject = async (
   form: ProjectForm,
   creatorId: string,
   token: string
-): Promise<CreateProjectMutationResponse> => {
-  const imageUrl = await uploadImage(form.image);
+): Promise<any> => {
+  try {
+    const imageUrl = await uploadImage(form.image);
 
-  if (imageUrl.url) {
-    client.setHeader("Authorization", `Bearer ${token}`);
+    if (imageUrl.url) {
+      client.setHeader("Authorization", `Bearer ${token}`);
 
-    const variables = {
-      input: {
-        ...form,
-        image: imageUrl.url,
-        createdBy: {
-          link: creatorId,
+      const variables = {
+        input: {
+          ...form,
+          image: imageUrl.url,
+          createdBy: {
+            link: creatorId,
+          },
         },
-      },
-    };
+      };
 
-    return makeGraphQLRequest(createProjectMutation, variables);
+      return makeGraphQLRequest(createProjectMutation, variables);
+    }
+
+    // If imageUrl.url is falsy, handle the error or return an appropriate response.
+    throw new Error("Image upload failed");
+  } catch (error) {
+    // Handle errors
+    console.error("Error creating a new project:", error);
+    throw error;
   }
 };
 
@@ -153,7 +123,7 @@ export const updateProject = async (
   form: ProjectForm,
   projectId: string,
   token: string
-): Promise<UpdateProjectMutationResponse> => {
+): Promise<any> => {
   function isBase64DataURL(value: string): boolean {
     const base64Regex = /^data:image\/[a-z]+;base64,/;
     return base64Regex.test(value);
