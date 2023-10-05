@@ -1,5 +1,4 @@
 import { GraphQLClient } from "graphql-request";
-
 import {
   createProjectMutation,
   createUserMutation,
@@ -50,19 +49,38 @@ export const uploadImage = async (imagePath: string) => {
 
 const makeGraphQLRequest = async (query: string, variables = {}) => {
   try {
+    // Check for null specifically in the 'category' field
+    if (variables.category === null) {
+      variables.category = ""; // convert null to an empty string
+    }
+
     return await client.request(query, variables);
   } catch (err) {
     throw err;
   }
 };
 
-export const fetchAllProjects = (
+export const fetchAllProjects = async (
   category?: string | null,
   endcursor?: string | null
 ) => {
-  client.setHeader("x-api-key", apiKey);
+  try {
+    // Set the API key in the headers
+    client.setHeader("x-api-key", apiKey);
 
-  return makeGraphQLRequest(projectsQuery, { category, endcursor });
+    // Convert null to an empty string only for the 'category' field
+    const variables = { category: category || "", endcursor };
+
+    // Make the GraphQL request
+    const response = await makeGraphQLRequest(projectsQuery, variables);
+
+    // Return the response
+    return response;
+  } catch (err) {
+    // Handle errors
+    console.error("Error fetching projects:", err);
+    throw err;
+  }
 };
 
 export const createNewProject = async (
