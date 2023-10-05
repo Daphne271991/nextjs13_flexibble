@@ -49,7 +49,7 @@ export const uploadImage = async (imagePath: string): Promise<any> => {
 
 const makeGraphQLRequest = async (
   query: string,
-  variables = {}
+  variables: Record<string, any> = {}
 ): Promise<any> => {
   try {
     // Check for null specifically in the 'category' field
